@@ -35,6 +35,7 @@ from pycel.lib.function_helpers import (
 import threading
 import pycel.excelwrapper
 import string
+import re
 
 """ Functions consuming or producing references.
 INDEX() - Takes an array or reference, returns the value pointed to
@@ -377,12 +378,61 @@ def lookup(lookup_value, lookup_array, result_range=None):
 def match(lookup_value, lookup_array, match_type=1):
     # Excel reference: https://support.microsoft.com/en-us/office/
     #   match-function-e8dffd45-c762-47d6-bf89-533f4a37673a
-    if len(lookup_array) == 1:
-        lookup_array = lookup_array[0]
-    else:
-        lookup_array = tuple(row[0] for row in lookup_array)
 
-    return _match(lookup_value, lookup_array, match_type)
+    if type(lookup_array) == str and "STATIC" in lookup_array:
+        address = lookup_array
+        address_pieces = address.split('!')
+        sheet_name = address_pieces[0]
+        address_range = address_pieces[1]
+
+        if len(address_pieces) != 2 or (not (':' in address_range)):
+            raise Exception('STATIC match address "' + '" must be in supported format i.e. SHEET!A1:A2')
+
+        address_1, address_2 = address_range.split(':')
+
+        lookup_array_from_static_sheet = pycel.excelwrapper.static_sheets.get(sheet_name)
+
+        if not list_like(lookup_array_from_static_sheet):
+            return NA_ERROR
+
+        regex = re.compile('([A-z]+)([0-9]+)')
+
+        address_1_match = regex.match(address_1)
+        address_1_letters = address_1_match[1]
+        address_1_number = address_1_match[2]
+
+        address_2_match = regex.match(address_2)
+        address_2_letters = address_2_match[1]
+        address_2_number = address_2_match[2]
+
+        if len(address_1_letters) > 1 or len(address_2_letters) > 1:
+            raise Exception('STATIC match does not yet support columns with multiple letters')
+
+        is_vertical_lookup = address_1_letters == address_2_letters
+
+        if is_vertical_lookup:
+            letter_index = string.ascii_lowercase.index(address_1_letters.lower())
+
+            starting_number_index = int(address_1_number) - 1
+            ending_number_index = int(address_2_number) - 1
+
+            lookup_array_to_use = [row[letter_index].value for row in lookup_array_from_static_sheet[starting_number_index:ending_number_index]]
+        else:
+            if address_1_number != address_2_number:
+                raise Exception('STATIC match address error expected address numbers to equal each other for a horizontal match lookup but they did not, is this match syntax correct? i.e. C4:E4? Actual range provided: ' + address_range)
+
+            starting_letter_index = string.ascii_lowercase.index(address_1_letters.lower())
+            ending_letter_index = string.ascii_lowercase.index(address_2_letters.lower())
+            lookup_array_to_use = [column.value for column in lookup_array_from_static_sheet[int(address_1_number) - 1][starting_letter_index:ending_letter_index+1]]
+
+        return _match(lookup_value, lookup_array_to_use, match_type)
+    else:
+        if len(lookup_array) == 1:
+            lookup_array = lookup_array[0]
+        else:
+            lookup_array = tuple(row[0] for row in lookup_array)
+
+        return _match(lookup_value, lookup_array, match_type)
 
 
 @excel_helper(cse_params=(1, 2, 3, 4), ref_params=0, number_params=(1, 2))
