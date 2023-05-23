@@ -373,6 +373,11 @@ def lookup(lookup_value, lookup_array, result_range=None):
         # error string
         return match_idx
 
+def excel_column_index(column):
+    index = 0
+    for char in column:
+        index = index * 26 + (ord(char.upper()) - ord('A')) + 1
+    return index - 1
 
 @excel_helper(cse_params=0, number_params=2, err_str_params=(0, 2))
 def match(lookup_value, lookup_array, match_type=1):
@@ -405,13 +410,10 @@ def match(lookup_value, lookup_array, match_type=1):
         address_2_letters = address_2_match[1]
         address_2_number = address_2_match[2]
 
-        if len(address_1_letters) > 1 or len(address_2_letters) > 1:
-            raise Exception('STATIC match does not yet support columns with multiple letters')
-
         is_vertical_lookup = address_1_letters == address_2_letters
 
         if is_vertical_lookup:
-            letter_index = string.ascii_lowercase.index(address_1_letters.lower())
+            letter_index = excel_column_index(address_1_letters.lower())
 
             starting_number_index = int(address_1_number) - 1
             ending_number_index = int(address_2_number) - 1
@@ -421,8 +423,8 @@ def match(lookup_value, lookup_array, match_type=1):
             if address_1_number != address_2_number:
                 raise Exception('STATIC match address error expected address numbers to equal each other for a horizontal match lookup but they did not, is this match syntax correct? i.e. C4:E4? Actual range provided: ' + address_range)
 
-            starting_letter_index = string.ascii_lowercase.index(address_1_letters.lower())
-            ending_letter_index = string.ascii_lowercase.index(address_2_letters.lower())
+            starting_letter_index = excel_column_index(address_1_letters.lower())
+            ending_letter_index = excel_column_index(address_2_letters.lower())
             lookup_array_to_use = [column.value for column in lookup_array_from_static_sheet[int(address_1_number) - 1][starting_letter_index:ending_letter_index+1]]
 
         return _match(lookup_value, lookup_array_to_use, match_type)
@@ -540,7 +542,7 @@ def vlookup(lookup_value, table_array, col_index_num, range_lookup=True):
         if col_index_num > len(table_array[0]):
             return REF_ERROR
 
-        starting_index = string.ascii_lowercase.index(address_range[0].lower())
+        starting_index = excel_column_index(address_range[0].lower())
         result_idx = _match(lookup_value, [row[starting_index].value for row in table_array], match_type=bool(range_lookup))
 
         if isinstance(result_idx, int):
