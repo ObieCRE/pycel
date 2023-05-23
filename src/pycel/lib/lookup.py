@@ -418,14 +418,14 @@ def match(lookup_value, lookup_array, match_type=1):
             starting_number_index = int(address_1_number) - 1
             ending_number_index = int(address_2_number) - 1
 
-            lookup_array_to_use = [row[letter_index].value for row in lookup_array_from_static_sheet[starting_number_index:ending_number_index]]
+            lookup_array_to_use = [row[letter_index] for row in lookup_array_from_static_sheet[starting_number_index:ending_number_index]]
         else:
             if address_1_number != address_2_number:
                 raise Exception('STATIC match address error expected address numbers to equal each other for a horizontal match lookup but they did not, is this match syntax correct? i.e. C4:E4? Actual range provided: ' + address_range)
 
             starting_letter_index = excel_column_index(address_1_letters.lower())
             ending_letter_index = excel_column_index(address_2_letters.lower())
-            lookup_array_to_use = [column.value for column in lookup_array_from_static_sheet[int(address_1_number) - 1][starting_letter_index:ending_letter_index+1]]
+            lookup_array_to_use = [column for column in lookup_array_from_static_sheet[int(address_1_number) - 1][starting_letter_index:ending_letter_index+1]]
 
         return _match(lookup_value, lookup_array_to_use, match_type)
     else:
@@ -543,10 +543,10 @@ def vlookup(lookup_value, table_array, col_index_num, range_lookup=True):
             return REF_ERROR
 
         starting_index = excel_column_index(address_range[0].lower())
-        result_idx = _match(lookup_value, [row[starting_index].value for row in table_array], match_type=bool(range_lookup))
+        result_idx = _match(lookup_value, [row[starting_index] for row in table_array], match_type=bool(range_lookup))
 
         if isinstance(result_idx, int):
-            return table_array[result_idx - 1][starting_index + col_index_num - 1].value
+            return table_array[result_idx - 1][starting_index + col_index_num - 1]
         else:
             # error string
             return result_idx
