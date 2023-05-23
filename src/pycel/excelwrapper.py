@@ -17,6 +17,7 @@ import abc
 import collections
 import os
 from unittest import mock
+import numpy as np
 
 from openpyxl import load_workbook, Workbook
 from openpyxl.cell.cell import Cell, MergedCell
@@ -254,7 +255,8 @@ class ExcelOpxWrapper(ExcelWrapper):
                     static_sheets[sheet_name] = []
 
                     for row in read_only_workbook[sheet_name].rows:
-                        static_sheets[sheet_name].append(row)
+                        row_as_array = np.array([obj.value for obj in row])
+                        static_sheets[sheet_name].append(row_as_array)
 
         self.load_array_formulas()
 
