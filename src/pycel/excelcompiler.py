@@ -280,7 +280,7 @@ class ExcelCompiler:
         excel_compiler.excel = None
         return excel_compiler
 
-    def to_file(self, filename=None, file_types=('pkl', 'yml')):
+    def to_file(self, filename=None, file_types=('pkl', 'yml'), use_compiler_instance=False):
         """ Save the spreadsheet to a file so it can be loaded later w/o excel
 
         :param filename: filename to save as, defaults to xlsx_name + file_type
@@ -338,10 +338,12 @@ class ExcelCompiler:
             if not filename.endswith(pickle_extension):
                 filename += '.' + pickle_extension
             if text_changed or not os.path.exists(filename):
-                excel_compiler = self
-                if not excel_compiler:
+                if use_compiler_instance:
+                    excel_compiler = self
+                else:
                     excel_compiler = self._from_text(text_name, is_json=is_json)
 
+                # Set current state of static_sheets global variable to be pickled
                 excel_compiler.static_sheets = pycel.excelwrapper.static_sheets
 
                 if non_pickle_extension not in file_types:
@@ -375,6 +377,7 @@ class ExcelCompiler:
             excel_compiler = cls._from_text(
                 filename, is_json=extension == 'json')
 
+        # Set unpickled static_sheets to global variable
         if hasattr(excel_compiler, "static_sheets"):
             pycel.excelwrapper.static_sheets = excel_compiler.static_sheets
 
