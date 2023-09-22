@@ -32,6 +32,7 @@ from pycel.excelutil import (
     list_like,
 )
 from pycel.excelwrapper import ExcelOpxWrapper, ExcelOpxWrapperNoData
+import pycel.excelwrapper
 
 REF_START = '=_REF_("'
 REF_END = '")'
@@ -336,9 +337,12 @@ class ExcelCompiler:
         if pickle_extension:
             if not filename.endswith(pickle_extension):
                 filename += '.' + pickle_extension
-
             if text_changed or not os.path.exists(filename):
-                excel_compiler = self._from_text(text_name, is_json=is_json)
+                excel_compiler = self
+                if not excel_compiler:
+                    excel_compiler = self._from_text(text_name, is_json=is_json)
+                if hasattr(excel_compiler.excel, "static_sheets"):
+                    excel_compiler.static_sheets = pycel.excelwrapper.static_sheets
                 if non_pickle_extension not in file_types:
                     os.unlink(text_name)
 
@@ -369,6 +373,10 @@ class ExcelCompiler:
         else:
             excel_compiler = cls._from_text(
                 filename, is_json=extension == 'json')
+            
+
+        if hasattr(excel_compiler, "static_sheets"):
+            pycel.excelwrapper.static_sheets = excel_compiler.static_sheets
 
         excel_compiler.excel = _CompiledImporter('', {
             'filename': excel_compiler.filename,
