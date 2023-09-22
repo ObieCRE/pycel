@@ -341,8 +341,9 @@ class ExcelCompiler:
                 excel_compiler = self
                 if not excel_compiler:
                     excel_compiler = self._from_text(text_name, is_json=is_json)
-                if hasattr(excel_compiler.excel, "static_sheets"):
-                    excel_compiler.static_sheets = pycel.excelwrapper.static_sheets
+
+                excel_compiler.static_sheets = pycel.excelwrapper.static_sheets
+
                 if non_pickle_extension not in file_types:
                     os.unlink(text_name)
 
@@ -373,7 +374,6 @@ class ExcelCompiler:
         else:
             excel_compiler = cls._from_text(
                 filename, is_json=extension == 'json')
-            
 
         if hasattr(excel_compiler, "static_sheets"):
             pycel.excelwrapper.static_sheets = excel_compiler.static_sheets
