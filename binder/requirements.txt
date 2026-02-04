@@ -1,7 +1,7 @@
 matplotlib
 networkx>=2.0,<2.7
 numpy
-git+https://github.com/ObieCRE/openpyxl@b2edc9#egg=openpyxl
+git+https://github.com/ObieCRE/openpyxl@86bf690#egg=openpyxl
 python-dateutil
 pydot
 ruamel.yaml
